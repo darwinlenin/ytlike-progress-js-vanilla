@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>
+         body {
+            font-family: Arial;
+            min-width: 400px;
+            min-height: 300px;
+         }
+         /* Style the tab */
+         .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            display:flex;
+         }
+
+         /* Style the buttons inside the tab */
+         .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+            width: -webkit-fill-available;
+            width:-moz-available;
+        }
+         /* Change background color of buttons on hover */
+         .tab button:hover {
+            background-color: #ddd;
+         }
+         /* Create an active/current tablink class */
+         .tab button.active {
+            background-color: #ccc;
+            font-weight:bolder;
+         }
+         /* Style the tab content */
+         .tabcontent {
+            display: none;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-top: none;
+            min-height:249px;
+         }
+
+         @media (max-width: 600px) {
+            .tab {
+                overflow: hidden;
+                border: 1px solid #ccc;
+                background-color: #f1f1f1;
+                display: flow-root;
+            }
+            .tab button {
+                background-color: inherit;
+                float: left;
+                border: none;
+                outline: none;
+                cursor: pointer;
+                padding: 14px 16px;
+                transition: 0.3s;
+                font-size: 17px;
+                width: fit-content;
+                width:-moz-available;
+            }
+         }
+      </style>
+   </head>
+   <body>
+      <div class="tab">
+         <button id="All" class="tablinks" value="All" onclick="openContent(event, 'AllResult')">All</button>
+         <button id="Opt1" class="tablinks" value="Opt1" onclick="openContent(event, 'Opt1Result')">Opt1</button>
+         <button id="Opt2" class="tablinks" value="Opt2" onclick="openContent(event, 'Opt2Result')">Opt2</button>
+         <button id="Opt3" class="tablinks" value="Opt3" onclick="openContent(event, 'Opt3Result')">Opt3</button>
+      </div>
+
+      <div style="display:-webkit-flex">
+        <div id="AllBar"  style="width:0px;height:3px;background:red;"></div>
+      </div>
+
+      <div id="AllResult" class="tabcontent" style="text-align: center;">
+         <h1></h1>
+         <h2> </h2>
+      </div>
+      <div id="Opt1Result" class="tabcontent" style="text-align: center;">
+         <h1></h1>
+         <h2> </h2>
+      </div>
+      <div id="Opt2Result" class="tabcontent" style="text-align: center;">
+         <h1></h1>
+         <h2> </h2>
+      </div>
+      <div id="Opt3Result" class="tabcontent" style="text-align: center;">
+         <h1></h1>
+         <h2> </h2>
+      </div>
+      <script>
+            /** @Author Darwin Palma  23-07-2020 **/
+            window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+            window.cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame || window.msCancelAnimationFrame;
+            
+            //Parameters to set configuration hash color and quantity of selectable options
+            const queryString = document.URL;
+            const _color = queryString.split("#")[1];
+            const _countElements= queryString.split("|").length;
+            const _interVal = _countElements-4;
+
+            //Logic to add new selections components 
+            if(queryString.match(/#/g)!=null) if(queryString.match(/#/g).length < 2){
+                    if(_color!=null) document.querySelector("#AllBar").style.backgroundColor = _color;
+                    if(_countElements!=null && _countElements>4){
+                        for(let i = 0; i < _interVal; i++){
+                            document.querySelector(".tab").insertAdjacentHTML("beforeend",`<button id="Opt`+(i+4)+`" class="tablinks" value="Opt`+(i+4)+`" onclick="openContent(event, 'Opt`+(i+4)+`Result')">Opt`+(i+4)+`</button>`);
+                            document.querySelector("body").insertAdjacentHTML("beforeend",
+                            `<div id="Opt`+(i+4)+`Result" class="tabcontent" style="text-align: center;">
+                                <h1></h1>
+                                <h2> </h2>
+                            </div>`);
+                        }
+                    } 
+                }
+            
+            var start = null, ele = document.getElementById("AllBar");
+            var progress = 0;
+            var _requestId, _compo;
+            localStorage.clear();
+
+            const event = document.createEvent('HTMLEvents');
+            event.initEvent('click', true, false);
+            document.querySelector('#All').dispatchEvent(event);
+
+            //function to finish to fill the progressbar and update components values
+            function progressStep(i){
+                if(progress > 99) {
+                    _compo = _compo + ((localStorage.getItem('Opt'+(i))!=null)?" "+localStorage.getItem('Opt'+(i))+" ":"");
+                    document.querySelectorAll("h2").forEach(function(el) {
+                        if(_compo.trim()==="") el.innerText ="> All <";
+                        else el.innerText = "> "+ _compo +" <";
+                    });
+                    document.querySelectorAll("h1").forEach(function(el) { el.innerHTML = "<b>Currently selected:</b>"; });
+                }
+            }
+
+            //Function to fill the progressbar
+            function step(timestamp) {
+                progress += 0.5;
+                _compo="";
+                ele.style.width = progress+"%";
+                if (progress <= 100) _requestId = requestAnimationFrame(step);
+
+                if(Object.keys(localStorage).length === 0){
+                    document.querySelector('#All').dispatchEvent(event);
+                } else if(queryString.match(/#/g) != null){
+                    if(queryString.match(/#/g).length < 2){
+                        if(_countElements != null && _countElements > 4){
+                            for(let i = 1; i < _countElements; i++) progressStep(i);
+                        } else if(_countElements != null && _countElements <= 4){
+                            for(let i = 1; i < 4; i++) progressStep(i);
+                        }
+                    } 
+                } else  for(let i = 1; i < 4; i++) progressStep(i);
+                
+            }
+
+            //Logic function to enable/disable options
+            function openContent(evt, contentName) {
+                var tabcontent, tablinks;
+                cancelAnimationFrame(_requestId);
+                progress = 0;
+                ele.style.width="0px";
+
+                tabcontent = document.getElementsByClassName("tabcontent");
+                for (let i = 0; i < tabcontent.length; i++) 
+                    tabcontent[i].style.display = "none";
+                
+                tablinks = document.getElementsByClassName("tablinks");
+
+                if(contentName.includes("AllResult")) {
+                    localStorage.clear();
+                    localStorage.setItem('All',"All");
+
+                    for (let i = 0; i < tablinks.length; i++) 
+                        tablinks[i].className = tablinks[i].className.replace(" active", ""); 
+                    
+                    document.querySelector("#AllResult > h2").innerText="";
+                    document.querySelectorAll("h1").forEach(function(el) { el.innerHTML = ""; });
+                }
+
+                if(queryString.match(/#/g) != null){
+                    document.querySelectorAll("h1").forEach(function(el) { el.innerHTML = ""; });
+                    if(queryString!=null && queryString.match(/#/g).length < 2){
+                        if(_countElements != null && _countElements > 4)
+                            for(let i = 1; i < _countElements; i++) sendToAnimationFrame(i,contentName);
+                        else for(let i = 1; i < 4; i++) sendToAnimationFrame(i,contentName);
+                    } 
+                } else {
+                    document.querySelectorAll("h1").forEach(function(el) { el.innerHTML = ""; });
+                    for(let i = 1; i < 4; i++) sendToAnimationFrame(i,contentName);
+                }
+                
+                if(document.getElementById(contentName)!=null) document.getElementById(contentName).style.display = "block";
+                if(evt!=null) if(evt.currentTarget!=null) evt.currentTarget.classList.toggle("active");  
+                requestAnimationFrame(step);
+            }
+
+            //Function to set values in storages
+            function sendToAnimationFrame(i,contentName){
+                if(contentName.includes("Opt"+(i)+"Result")) {
+                    (localStorage.getItem('Opt'+(i))=='Opt'+(i))? localStorage.removeItem('Opt'+(i)):localStorage.setItem('Opt'+(i),"Opt"+(i));
+                    (localStorage.getItem('All')=='All')? localStorage.removeItem('All'):"";
+                    
+                    document.querySelector("#All").classList.remove("active");
+                    document.querySelector("#Opt"+(i)+"Result > h2").innerText="";
+                }
+            }
+      </script>
+   </body>
+   <hmtl>
